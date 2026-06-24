@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import apiClient from '../../api';
+import apiClient from '../../api'
 
 // 狀態彈窗
 const statusDialog = ref({
@@ -272,7 +272,7 @@ const periodEdit = async () => {
       ...data,
       pack: JSON.stringify(data.pack),
     }))
-    await apiClient.put('/api/periods/edit', {
+    await apiClient.post('/api/periods/edit', {
       periodId: period.value.id,
       data: formattedData, // 剛剛讀取出來的大陣列
     })

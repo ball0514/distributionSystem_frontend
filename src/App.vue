@@ -10,7 +10,7 @@ import SearchBubble from './components/SearchBubble.vue'
 const route = useRoute()
 
 const isNotHome = computed(() => {
-  return route.path !== '/'
+  return route.path !== '/' && !route.path.startsWith('/periodEdit')
 })
 </script>
 
