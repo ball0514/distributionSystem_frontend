@@ -28,6 +28,7 @@ declare global {
   }
 
   interface Pack {
+    box: number
     size: number
     detail?: PackDetail
   }
@@ -36,6 +37,7 @@ declare global {
     [amount: string]: {
       quantity: number
       status: number
+      box?: boolean
     }
   }
 
@@ -43,7 +45,7 @@ declare global {
     id: number
     name?: string
     status?: number
-    status_firstBox?: number
+    status_firstbox?: number
   }
 
   interface Records {

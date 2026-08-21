@@ -48,8 +48,10 @@
       :headers="headers"
       :items="periodsList"
       :items-per-page="-1"
+      item-value="id"
       v-if="periodsList.length > 0"
       hide-default-footer
+      class="border"
     >
       <template v-slot:[`item.name`]="{ item }">
         <RouterLink to="/" @click.prevent="goPeriod(item)">{{ item.name }}</RouterLink>
@@ -94,7 +96,7 @@
 // import TheWelcome from '../components/TheWelcome.vue'
 
 import { ref, onMounted } from 'vue'
-import apiClient from '../api';
+import apiClient from '../api'
 
 // 狀態彈窗
 const statusDialog = ref({

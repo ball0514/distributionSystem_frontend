@@ -138,7 +138,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import apiClient from '../api';
+import apiClient from '../api'
 
 const route = useRoute()
 
@@ -245,6 +245,11 @@ const result = ref<Items>({
 })
 
 function searchItem() {
+  if (!searchItemInput.value) {
+    result.value = { id: 0 }
+    return
+  }
+
   result.value = itemsList.value.find((item) => {
     let value = ''
     if (searchItemInput1.value.startsWith('NO.')) {
@@ -257,10 +262,8 @@ function searchItem() {
       value = searchItemInput1.value + '全' + searchItemInput2.value.padStart(2, '0') + '表'
     } else if (searchItemInput1.value.startsWith('業')) {
       value = searchItemInput1.value + '務' + searchItemInput2.value.padStart(2, '0') + '表'
-    } else {
-      value = searchItemInput1.value
     }
-    return item.code === value
+    return item.code?.includes(value)
   }) ?? { id: 0 }
 }
 

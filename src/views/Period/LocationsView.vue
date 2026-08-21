@@ -3,9 +3,11 @@
     :headers="headers"
     :items="locationsList"
     :items-per-page="-1"
+    item-value="id"
     :row-props="getRowClass"
     hide-default-footer
     no-data-text="無"
+    class="border"
   >
     <template v-slot:[`item.actions`]="{ item }">
       <div class="d-flex align-center">
@@ -28,7 +30,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import apiClient from '../../api';
+import apiClient from '../../api'
 
 const route = useRoute()
 
@@ -71,7 +73,7 @@ const headers = [
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
-      style: 'width: 200px;',
+      style: 'width: 240px;',
     },
   },
 ]

@@ -6,8 +6,11 @@ import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import FirstBoxBubble from './components/FirstBoxBubble.vue'
 import SearchBubble from './components/SearchBubble.vue'
+import PrintPage from './components/PrintPage.vue'
+import { usePrintItemsStore } from '@/stores/usePrintItemsStore'
 
 const route = useRoute()
+const printItemsStore = usePrintItemsStore()
 
 const isNotHome = computed(() => {
   return route.path !== '/' && !route.path.startsWith('/periodEdit')
@@ -28,8 +31,9 @@ const isNotHome = computed(() => {
         </nav>
       </div>
     </header> -->
-    <FirstBoxBubble v-if="isNotHome" />
-    <SearchBubble v-if="isNotHome" />
+    <FirstBoxBubble v-if="isNotHome && !printItemsStore.printStatus" />
+    <SearchBubble v-if="isNotHome && !printItemsStore.printStatus" />
+    <PrintPage v-if="printItemsStore.printStatus" />
     <RouterView />
   </v-app>
 </template>

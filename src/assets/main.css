@@ -6,3 +6,10 @@
   padding: 2rem;
   font-weight: normal;
 }
+
+@media print {
+  /* 隱藏頁面上所有的東西（包括 Vuetify 的各個層級） */
+  #app {
+    display: none !important;
+  }
+}

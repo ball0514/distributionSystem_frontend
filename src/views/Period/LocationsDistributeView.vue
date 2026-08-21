@@ -23,13 +23,53 @@
     }}</span>
   </p>
 
+  <p class="text-red-darken-1 font-weight-bold text-center">未放</p>
   <v-data-table
     :headers="headers"
-    :items="recordsList"
+    :items="recordsList.filter((item) => item.status === 0)"
     :items-per-page="-1"
+    item-value="record_id"
     :row-props="getRowClass"
     hide-default-footer
     no-data-text="無"
+    class="border"
+  >
+    <template v-slot:[`item.code`]="{ item }">
+      <v-btn variant="text" :to="`/periods/${periodId}/items/${item.item_id}/distribute`">
+        {{ item.code }}
+      </v-btn>
+    </template>
+
+    <template v-slot:[`item.type`]="{ item }">
+      <v-chip variant="flat" v-if="item.type" :color="typeClass(item.type)">
+        {{ item.type }}
+      </v-chip>
+    </template>
+
+    <template v-slot:[`item.actions`]="{ item }">
+      <v-checkbox
+        v-model="item.status"
+        :label="`${item.status ? 'OK' : 'NO'}`"
+        :color="`${item.status ? 'green' : ''}`"
+        :true-value="1"
+        :false-value="0"
+        @update:model-value="recordEdit(item)"
+        hide-details
+      >
+      </v-checkbox>
+    </template>
+  </v-data-table>
+
+  <p class="text-green-darken-1 font-weight-bold text-center">已放</p>
+  <v-data-table
+    :headers="headers"
+    :items="recordsList.filter((item) => item.status === 1)"
+    :items-per-page="-1"
+    item-value="record_id"
+    :row-props="getRowClass"
+    hide-default-footer
+    no-data-text="無"
+    class="border"
   >
     <template v-slot:[`item.code`]="{ item }">
       <v-btn variant="text" :to="`/periods/${periodId}/items/${item.item_id}/distribute`">
@@ -61,7 +101,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import apiClient from '../../api';
+import apiClient from '../../api'
 
 // 狀態彈窗
 const statusDialog = ref({
@@ -185,6 +225,8 @@ const typeClass = (type: string) => {
   switch (type) {
     case '信':
       return 'brown'
+    case '箱':
+      return 'amber'
     case '單':
       return 'teal'
     case '釘':
@@ -193,6 +235,8 @@ const typeClass = (type: string) => {
       return 'indigo'
     case '糊':
       return 'pink'
+    case '圖':
+      return 'blue'
     default:
       return ''
   }

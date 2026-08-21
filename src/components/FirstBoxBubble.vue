@@ -28,11 +28,13 @@
             <p class="text-red-darken-1 font-weight-bold">未放</p>
             <v-data-table
               :headers="headers"
-              :items="locationsList.filter((location) => location.status_firstBox === 0)"
+              :items="locationsList.filter((location) => location.status_firstbox === 0)"
               :items-per-page="-1"
+              item-value="id"
               :row-props="getRowClass"
               hide-default-footer
               no-data-text="無"
+              class="border"
             >
               <template v-slot:no-data v-if="locationsList.length !== 0">
                 <div class="py-8 text-center text-green-darken-1">
@@ -49,9 +51,9 @@
                 </div>
               </template>
 
-              <template v-slot:[`item.status_firstBox`]="{ item }">
+              <template v-slot:[`item.status_firstbox`]="{ item }">
                 <v-checkbox
-                  v-model="item.status_firstBox"
+                  v-model="item.status_firstbox"
                   :true-value="1"
                   :false-value="0"
                   hide-details
@@ -64,11 +66,13 @@
             <p class="text-green-darken-1 font-weight-bold">已放</p>
             <v-data-table
               :headers="headers"
-              :items="locationsList.filter((location) => location.status_firstBox === 1)"
+              :items="locationsList.filter((location) => location.status_firstbox === 1)"
               :items-per-page="-1"
+              item-value="id"
               :row-props="getRowClass"
               hide-default-footer
               no-data-text="無"
+              class="border"
             >
               <template v-slot:[`item.name`]="{ item }">
                 <div class="d-flex text-start">
@@ -76,9 +80,9 @@
                 </div>
               </template>
 
-              <template v-slot:[`item.status_firstBox`]="{ item }">
+              <template v-slot:[`item.status_firstbox`]="{ item }">
                 <v-checkbox
-                  v-model="item.status_firstBox"
+                  v-model="item.status_firstbox"
                   :true-value="1"
                   :false-value="0"
                   hide-details
@@ -95,7 +99,7 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import apiClient from '../api';
+import apiClient from '../api'
 
 const route = useRoute()
 
@@ -136,7 +140,7 @@ const headers = [
   },
   {
     title: '第一箱',
-    value: 'status_firstBox',
+    value: 'status_firstbox',
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
@@ -146,7 +150,7 @@ const headers = [
 ]
 
 const getRowClass = ({ index, item }: { index: number; item: Locations }) => {
-  if (item.status_firstBox === 1) {
+  if (item.status_firstbox === 1) {
     return { class: 'bg-green-lighten-4' }
   } else if (index % 2 === 0) {
     return { class: 'bg-grey-lighten-3' }
@@ -159,7 +163,7 @@ async function editStatusFirstBox(location: Locations) {
   try {
     await apiClient.put('/api/locations/edit', {
       id: location.id,
-      status_firstBox: location.status_firstBox,
+      status_firstbox: location.status_firstbox,
     })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)

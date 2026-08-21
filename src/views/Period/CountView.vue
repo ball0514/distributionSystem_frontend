@@ -26,12 +26,19 @@
     <v-chip variant="flat" v-if="itemsList[0]?.type" :color="typeClass(itemsList[0]?.type)">
       {{ itemsList[0]?.type }}
     </v-chip>
-    <span class="ml-2">{{ itemsList[0]?.pack?.size }}</span>
+    <span class="ml-2"
+      >{{ itemsList[0]?.pack?.box ?? 0 }} / 箱，{{ itemsList[0]?.pack?.size }} / 疊</span
+    >
     <v-btn variant="text" icon @click="dialogEditTypePackSize = true">
       <v-icon>mdi-pencil</v-icon>
     </v-btn>
   </p>
-  <p>總數：{{ itemsList[0]?.total }}</p>
+  <p>
+    總數：{{ itemsList[0]?.total }}
+    <template v-if="!!itemsList[0]?.pack?.box">
+      ，共 {{ boxTotal }} 箱，留 {{ boxCount }} 箱，拆 {{ boxTotal - boxCount }} 箱
+    </template>
+  </p>
 
   <v-dialog v-model="dialogEditTypePackSize" width="360" persistent>
     <template v-slot:default>
@@ -47,7 +54,8 @@
             item-value="val"
           >
           </v-select>
-          <v-text-field label="基本數量" v-model="itemEditPackSize"></v-text-field>
+          <v-text-field label="一箱數量" type="number" v-model="itemEditPackBox"></v-text-field>
+          <v-text-field label="一疊數量" type="number" v-model="itemEditPackSize"></v-text-field>
         </v-card-text>
 
         <v-divider></v-divider>
@@ -72,6 +80,7 @@
         :row-props="getRowClass"
         hide-default-footer
         no-data-text="無"
+        class="border"
       >
         <template v-slot:[`item.1.status`]="{ item }">
           <v-checkbox
@@ -93,9 +102,11 @@
         :headers="headers"
         :items="recordsList"
         :items-per-page="-1"
+        item-value="record_id"
         :row-props="getRowClass"
         hide-default-footer
         no-data-text="無"
+        class="border"
       >
         <template v-slot:[`item.actions`]="{ item }">
           <v-btn variant="text" icon @click="openEditQuantityDialog(item)">
@@ -114,6 +125,7 @@
         <v-card-text class="px-4">
           <v-text-field
             label="數量"
+            type="number"
             v-model="itemEditObject.quantity"
             style="width: 300px"
           ></v-text-field>
@@ -134,9 +146,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import apiClient from '../../api';
+import apiClient from '../../api'
 
 // 狀態彈窗
 const statusDialog = ref({
@@ -181,7 +193,8 @@ const itemsListObj = ref<PackDetail>({})
 const recordsList = ref<Records[]>([])
 
 const itemEditType = ref<string>('')
-const itemEditPackSize = ref<number>(0)
+const itemEditPackSize = ref<number>(1)
+const itemEditPackBox = ref<number>(0)
 
 const loadItems = async () => {
   try {
@@ -199,6 +212,7 @@ const loadItems = async () => {
       }))
 
       itemEditType.value = itemsList.value[0]?.type || ''
+      itemEditPackBox.value = itemsList.value[0]?.pack?.box || 0
       itemEditPackSize.value = itemsList.value[0]?.pack?.size || 1
 
       itemsListObj.value = itemsList.value[0]?.pack?.detail ?? {}
@@ -222,6 +236,8 @@ const typeClass = (type: string) => {
   switch (type) {
     case '信':
       return 'brown'
+    case '箱':
+      return 'amber'
     case '單':
       return 'teal'
     case '釘':
@@ -230,10 +246,23 @@ const typeClass = (type: string) => {
       return 'indigo'
     case '糊':
       return 'pink'
+    case '圖':
+      return 'blue'
     default:
       return ''
   }
 }
+
+const boxTotal = computed(() => {
+  return itemsList.value[0]?.total && itemsList.value[0]?.pack?.box
+    ? Math.ceil(itemsList.value[0]?.total / itemsList.value[0]?.pack?.box)
+    : 0
+})
+const boxCount = computed(() => {
+  return (
+    Object.values(itemsList.value[0]?.pack?.detail ?? {}).filter((val) => val.box)[0]?.quantity ?? 0
+  )
+})
 
 const totalObj = ref<PackDetail>({})
 
@@ -250,16 +279,30 @@ const loadRecords = async () => {
       totalObj.value = {}
 
       recordsList.value.forEach((item) => {
+        const keep = itemsList.value[0]?.pack?.box ?? 0
+        if (keep) {
+          totalObj.value[keep] = totalObj.value[keep] || { quantity: 0, status: 1, box: true }
+          totalObj.value[keep].quantity =
+            (totalObj.value[keep].quantity || 0) +
+            Math.floor(item.quantity / (itemsList.value[0]?.pack?.box ?? 1))
+          totalObj.value[keep].box = true
+        }
+
         const divisor = itemsList.value[0]?.pack?.size ?? 1
+
         // 計算可以分出幾組
-        const quotient = Math.floor(item.quantity / divisor)
+        const quotient = keep
+          ? Math.floor((item.quantity % (itemsList.value[0]?.pack?.box ?? 1)) / divisor)
+          : Math.floor(item.quantity / divisor)
         if (quotient > 0) {
           totalObj.value[divisor] = totalObj.value[divisor] || { quantity: 0, status: 0 }
           totalObj.value[divisor].quantity = (totalObj.value[divisor].quantity || 0) + quotient
         }
 
         // 計算剩下的餘數
-        const remainder = item.quantity % divisor
+        const remainder = keep
+          ? (item.quantity % (itemsList.value[0]?.pack?.box ?? 1)) % divisor
+          : item.quantity % divisor
         if (remainder > 0) {
           totalObj.value[remainder] = totalObj.value[remainder] || {
             quantity: 0,
@@ -278,6 +321,10 @@ const loadRecords = async () => {
         }
       })
 
+      totalObj.value = Object.fromEntries(
+        Object.entries(totalObj.value).filter(([, obj]) => obj?.quantity > 0),
+      ) as PackDetail
+
       itemEdit('packDetail', totalObj.value)
     }
   } catch (error) {
@@ -287,30 +334,54 @@ const loadRecords = async () => {
 
 const typeOptions = ref([
   { text: '信封', val: '信' },
+  { text: '封箱', val: '箱' },
   { text: '單張', val: '單' },
   { text: '釘裝', val: '釘' },
   { text: '對摺', val: '摺' },
   { text: '糊頭', val: '糊' },
+  { text: '地圖', val: '圖' },
 ])
 
 function packSize(type: string) {
+  if (type === itemsList.value[0]?.type) {
+    itemEditPackSize.value = itemsList.value[0]?.pack?.size ?? 1
+    itemEditPackBox.value = itemsList.value[0]?.pack?.box ?? 0
+    return
+  }
+
   switch (type) {
     case '信':
+      itemEditPackBox.value = 1000
       itemEditPackSize.value = 50
       break
-    case '單':
+    case '箱':
+      itemEditPackBox.value = 0
       itemEditPackSize.value = 1
       break
+    case '單':
+      itemEditPackBox.value = 0
+      const quantities = recordsList.value.map((item) => item.quantity)
+      const maxQuantity = quantities.length > 0 ? Math.max(...quantities) : 1
+      itemEditPackSize.value = maxQuantity
+      break
     case '釘':
+      itemEditPackBox.value = 0
       itemEditPackSize.value = 50
       break
     case '摺':
+      itemEditPackBox.value = 0
       itemEditPackSize.value = 100
       break
     case '糊':
+      itemEditPackBox.value = 0
+      itemEditPackSize.value = 1
+      break
+    case '圖':
+      itemEditPackBox.value = 0
       itemEditPackSize.value = 1
       break
     default:
+      itemEditPackBox.value = 0
       itemEditPackSize.value = 1
       break
   }
@@ -329,13 +400,16 @@ async function itemEdit(content: string, obj?: PackDetail): Promise<void> {
     }
     if (content === 'typePackSize') {
       payload.pack = {
+        box: 0,
         size: 1,
       }
       payload.type = itemEditType.value
       payload.pack.size = itemEditPackSize.value
+      payload.pack.box = itemEditPackBox.value
     } else if (content === 'packDetail') {
       payload.pack = {
         size: itemEditPackSize.value,
+        box: itemEditPackBox.value,
         detail: {},
       }
       payload.pack.detail = obj
@@ -344,6 +418,7 @@ async function itemEdit(content: string, obj?: PackDetail): Promise<void> {
     await apiClient.put('/api/items/edit', payload)
 
     if (itemsList.value[0] && itemsList.value[0].pack) {
+      itemsList.value[0].pack.box = itemEditPackBox.value
       itemsList.value[0].pack.size = itemEditPackSize.value
     }
 
@@ -393,7 +468,7 @@ const headersPack = [
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
-      style: 'width: 100px;',
+      style: 'width: 160px;',
     },
   },
 ]
@@ -421,7 +496,7 @@ const headers = [
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
-      style: 'width: 100px;',
+      style: 'width: 160px;',
     },
   },
 ]

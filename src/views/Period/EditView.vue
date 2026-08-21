@@ -57,6 +57,7 @@
       :row-props="getRowClass"
       v-if="periodData.length > 0"
       hide-default-footer
+      class="border"
     >
       <template v-slot:[`item.type`]="{ item }">
         <v-chip variant="flat" v-if="item.type" :color="typeClass(item.type)">
@@ -109,34 +110,55 @@ onMounted(() => {
 const periodData = ref<DistributionList[]>([])
 const typeArray = ref([
   { name: '信封', value: '信' },
+  { name: '封箱', value: '箱' },
   { name: '單張', value: '單' },
   { name: '釘裝', value: '釘' },
   { name: '對摺', value: '摺' },
   { name: '糊頭', value: '糊' },
+  { name: '地圖', value: '圖' },
 ])
 
 function packSize(item: DistributionList) {
   item.pack = {
+    box: 0,
     size: 1,
   }
 
   switch (item.type) {
     case '信':
+      item.pack.box = 1000
       item.pack.size = 50
       break
-    case '單':
+    case '箱':
+      item.pack.box = 0
       item.pack.size = 1
       break
+    case '單':
+      item.pack.box = 0
+      const numbers = Object.values(item).filter(
+        (val): val is number => typeof val === 'number' && !Number.isNaN(val),
+      )
+      const maxVal = numbers.length > 0 ? Math.max(...numbers) : 1
+      item.pack.size = maxVal
+      break
     case '釘':
+      item.pack.box = 0
       item.pack.size = 50
       break
     case '摺':
+      item.pack.box = 0
       item.pack.size = 100
       break
     case '糊':
+      item.pack.box = 0
+      item.pack.size = 1
+      break
+    case '圖':
+      item.pack.box = 0
       item.pack.size = 1
       break
     default:
+      item.pack.box = 0
       item.pack.size = 1
       break
   }
@@ -207,6 +229,8 @@ const typeClass = (type: string) => {
   switch (type) {
     case '信':
       return 'brown'
+    case '箱':
+      return 'amber'
     case '單':
       return 'teal'
     case '釘':
@@ -215,6 +239,8 @@ const typeClass = (type: string) => {
       return 'indigo'
     case '糊':
       return 'pink'
+    case '圖':
+      return 'blue'
     default:
       return ''
   }

@@ -29,16 +29,54 @@
     <span class="ml-2">{{ itemsList[0]?.pack?.size }}</span>
   </p>
   <p>總數：{{ itemsList[0]?.total }}</p>
+  <p>共 {{ recordsList.length }} 間</p>
 
   <v-row>
     <v-col cols="12" md="6">
+      <p class="text-red-darken-1 font-weight-bold text-center">未放</p>
       <v-data-table
         :headers="headers"
-        :items="recordsList"
+        :items="recordsList.filter((item) => !item.status)"
         :items-per-page="-1"
+        item-value="record_id"
         :row-props="getRowClass"
         hide-default-footer
         no-data-text="無"
+        class="border"
+      >
+        <template v-slot:[`item.location_name`]="{ item }">
+          <v-btn
+            variant="text"
+            :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
+          >
+            {{ item.location_name }}
+          </v-btn>
+        </template>
+
+        <template v-slot:[`item.actions`]="{ item }">
+          <v-checkbox
+            v-model="item.status"
+            :label="`${item.status ? 'OK' : 'NO'}`"
+            :color="`${item.status ? 'green' : ''}`"
+            :true-value="1"
+            :false-value="0"
+            @update:model-value="recordEdit(item)"
+            hide-details
+          >
+          </v-checkbox>
+        </template>
+      </v-data-table>
+
+      <p class="text-green-darken-1 font-weight-bold text-center">已放</p>
+      <v-data-table
+        :headers="headers"
+        :items="recordsList.filter((item) => item.status)"
+        :items-per-page="-1"
+        item-value="record_id"
+        :row-props="getRowClass"
+        hide-default-footer
+        no-data-text="無"
+        class="border"
       >
         <template v-slot:[`item.location_name`]="{ item }">
           <v-btn
@@ -65,6 +103,7 @@
     </v-col>
 
     <v-col cols="12" md="6">
+      <p class="text-grey-darken-1 font-weight-bold text-center">剩餘數量</p>
       <v-data-table
         :headers="headersPack"
         :items="Object.entries(totalObj)"
@@ -72,6 +111,7 @@
         :row-props="getRowClass"
         hide-default-footer
         no-data-text="DONE"
+        class="border"
       >
         <template v-slot:no-data>
           <div class="py-8 text-center text-green-darken-1">
@@ -89,7 +129,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import apiClient from '../../api';
+import apiClient from '../../api'
 
 // 狀態彈窗
 const statusDialog = ref({
@@ -169,6 +209,8 @@ const typeClass = (type: string) => {
   switch (type) {
     case '信':
       return 'brown'
+    case '箱':
+      return 'amber'
     case '單':
       return 'teal'
     case '釘':
@@ -177,6 +219,8 @@ const typeClass = (type: string) => {
       return 'indigo'
     case '糊':
       return 'pink'
+    case '圖':
+      return 'blue'
     default:
       return ''
   }
@@ -200,16 +244,29 @@ const loadRecords = async () => {
 
       recordsList.value.forEach((record) => {
         if (record.status === 0) {
+          const keep = itemsList.value[0]?.pack?.box ?? 0
+          if (keep) {
+            totalObj.value[keep] = totalObj.value[keep] || { quantity: 0, status: 1, box: true }
+            totalObj.value[keep].quantity =
+              (totalObj.value[keep].quantity || 0) +
+              Math.floor(record.quantity / (itemsList.value[0]?.pack?.box ?? 1))
+            totalObj.value[keep].box = true
+          }
+
           const divisor = itemsList.value[0]?.pack?.size ?? 1
           // 計算可以分出幾組
-          const quotient = Math.floor(record.quantity / divisor)
+          const quotient = keep
+            ? Math.floor((record.quantity % (itemsList.value[0]?.pack?.box ?? 1)) / divisor)
+            : Math.floor(record.quantity / divisor)
           if (quotient > 0) {
             totalObj.value[divisor] = totalObj.value[divisor] || { quantity: 0, status: 0 }
             totalObj.value[divisor].quantity = (totalObj.value[divisor].quantity || 0) + quotient
           }
 
           // 計算剩下的餘數
-          const remainder = record.quantity % divisor
+          const remainder = keep
+            ? (record.quantity % (itemsList.value[0]?.pack?.box ?? 1)) % divisor
+            : record.quantity % divisor
           if (remainder > 0) {
             totalObj.value[remainder] = totalObj.value[remainder] || {
               quantity: 0,
@@ -232,7 +289,7 @@ const headers = [
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
-      style: 'width: 100px;',
+      style: 'width: 160px;',
     },
   },
   {
@@ -249,7 +306,7 @@ const headers = [
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
-      style: 'width: 100px;',
+      style: 'width: 160px;',
     },
   },
 ]
@@ -295,16 +352,29 @@ async function recordEdit(record: Records) {
 
     recordsList.value.forEach((record) => {
       if (record.status === 0) {
+        const keep = itemsList.value[0]?.pack?.box ?? 0
+        if (keep) {
+          totalObj.value[keep] = totalObj.value[keep] || { quantity: 0, status: 1, box: true }
+          totalObj.value[keep].quantity =
+            (totalObj.value[keep].quantity || 0) +
+            Math.floor(record.quantity / (itemsList.value[0]?.pack?.box ?? 1))
+          totalObj.value[keep].box = true
+        }
+
         const divisor = itemsList.value[0]?.pack?.size ?? 1
         // 計算可以分出幾組
-        const quotient = Math.floor(record.quantity / divisor)
+        const quotient = keep
+          ? Math.floor((record.quantity % (itemsList.value[0]?.pack?.box ?? 1)) / divisor)
+          : Math.floor(record.quantity / divisor)
         if (quotient > 0) {
           totalObj.value[divisor] = totalObj.value[divisor] || { quantity: 0, status: 0 }
           totalObj.value[divisor].quantity = (totalObj.value[divisor].quantity || 0) + quotient
         }
 
         // 計算剩下的餘數
-        const remainder = record.quantity % divisor
+        const remainder = keep
+          ? (record.quantity % (itemsList.value[0]?.pack?.box ?? 1)) % divisor
+          : record.quantity % divisor
         if (remainder > 0) {
           totalObj.value[remainder] = totalObj.value[remainder] || {
             quantity: 0,
@@ -314,6 +384,10 @@ async function recordEdit(record: Records) {
         }
       }
     })
+
+    totalObj.value = Object.fromEntries(
+      Object.entries(totalObj.value).filter(([, obj]) => obj?.quantity > 0),
+    ) as PackDetail
 
     // loadRecords()
   } catch (error: unknown) {
