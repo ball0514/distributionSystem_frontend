@@ -1,20 +1,24 @@
 <template>
   <!-- <teleport to="body"> -->
-  <v-row v-for="(rowGroup, rowIndex) in printRows" :key="rowIndex" class="print-row gap-2">
-    <v-col cols="4" v-for="item in rowGroup" :key="item.id">
-      <p class="text-center">{{ item.code }}</p>
-      <v-data-table
-        :headers="headers"
-        :items="Object.entries(item.pack?.detail ?? {})"
-        :items-per-page="-1"
-        item-value="id"
-        hide-default-footer
-        no-data-text="無"
-        class="border custom-table"
-      >
-      </v-data-table>
-    </v-col>
-  </v-row>
+  <div class="print-container">
+    <v-row v-for="(rowGroup, rowIndex) in printRows" :key="rowIndex" class="print-row gap-2">
+      <v-col cols="4" v-for="item in rowGroup" :key="item.id" class="print-col">
+        <div class="print-card">
+          <p class="text-center">{{ item.code }}</p>
+          <v-data-table
+            :headers="headers"
+            :items="Object.entries(item.pack?.detail ?? {})"
+            :items-per-page="-1"
+            item-value="id"
+            hide-default-footer
+            no-data-text="無"
+            class="border custom-table"
+          >
+          </v-data-table>
+        </div>
+      </v-col>
+    </v-row>
+  </div>
   <!-- </teleport> -->
 </template>
 

@@ -16,14 +16,28 @@
     display: none !important;
   }
 
-  /* 讓整個 v-row 成為不可分割的列印單元 */
+  /* 1. 確保每一列不被截斷 */
   .print-row {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 12px !important;
   }
 
-  /* 確保 Vuetify 的 table wrapper 不會鎖死高度 */
+  /* 2. 確保單一欄位與卡片不可分割 */
+  .print-col,
+  .print-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* 3. 關鍵：強制 <p> 標籤絕對不能與後面的表格分開 */
+  .print-card p {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    margin: 0 0 4px 0 !important;
+  }
+
+  /* 4. 避免 Vuetify 的 table wrapper 干擾分頁高度計算 */
   .v-table__wrapper {
     overflow: visible !important;
     height: auto !important;
