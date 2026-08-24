@@ -309,8 +309,8 @@ async function print() {
   await nextTick()
 
   // 觸發瀏覽器列印
-  // window.print()
-  // printItemsStore.changePrintStatus()
+  window.print()
+  printItemsStore.changePrintStatus()
   // selectedItems.value = []
   // printItemsStore.setPrintItems(selectedItems.value)
 }
