@@ -15,6 +15,19 @@
   .no-print {
     display: none !important;
   }
+
+  /* 讓整個 v-row 成為不可分割的列印單元 */
+  .print-row {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* 確保 Vuetify 的 table wrapper 不會鎖死高度 */
+  .v-table__wrapper {
+    overflow: visible !important;
+    height: auto !important;
+  }
 }
 
 @page {

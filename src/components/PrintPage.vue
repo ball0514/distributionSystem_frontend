@@ -1,7 +1,7 @@
 <template>
   <!-- <teleport to="body"> -->
-  <v-row class="gap-2">
-    <v-col cols="4" v-for="item in printItemsStore.selectPrintItems" :key="item.id">
+  <v-row v-for="(rowGroup, rowIndex) in printRows" :key="rowIndex" class="print-row gap-2">
+    <v-col cols="4" v-for="item in rowGroup" :key="item.id">
       <p class="text-center">{{ item.code }}</p>
       <v-data-table
         :headers="headers"
@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { usePrintItemsStore } from '@/stores/usePrintItemsStore'
 
 const printItemsStore = usePrintItemsStore()
@@ -42,6 +43,18 @@ const headers = [
     },
   },
 ]
+
+const printRows = computed(() => {
+  const items = printItemsStore.selectPrintItems ?? []
+  const chunkSize = 3
+  const chunks = []
+
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize))
+  }
+
+  return chunks
+})
 </script>
 
 <style scoped></style>
