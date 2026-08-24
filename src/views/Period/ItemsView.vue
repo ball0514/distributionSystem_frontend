@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="no-print">
     <v-row class="my-3">
       <v-col cols="12" md="4">
         <v-select
@@ -309,8 +309,8 @@ async function print() {
   await nextTick()
 
   // 觸發瀏覽器列印
-  window.print()
-  printItemsStore.changePrintStatus()
+  // window.print()
+  // printItemsStore.changePrintStatus()
   // selectedItems.value = []
   // printItemsStore.setPrintItems(selectedItems.value)
 }

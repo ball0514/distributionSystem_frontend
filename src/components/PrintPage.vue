@@ -1,21 +1,21 @@
 <template>
-  <teleport to="body">
-    <v-row class="gap-2">
-      <v-col cols="4" v-for="item in printItemsStore.selectPrintItems" :key="item.id">
-        <p class="text-center">{{ item.code }}</p>
-        <v-data-table
-          :headers="headers"
-          :items="Object.entries(item.pack?.detail ?? {})"
-          :items-per-page="-1"
-          item-value="id"
-          hide-default-footer
-          no-data-text="無"
-          class="border custom-table"
-        >
-        </v-data-table>
-      </v-col>
-    </v-row>
-  </teleport>
+  <!-- <teleport to="body"> -->
+  <v-row class="gap-2">
+    <v-col cols="4" v-for="item in printItemsStore.selectPrintItems" :key="item.id">
+      <p class="text-center">{{ item.code }}</p>
+      <v-data-table
+        :headers="headers"
+        :items="Object.entries(item.pack?.detail ?? {})"
+        :items-per-page="-1"
+        item-value="id"
+        hide-default-footer
+        no-data-text="無"
+        class="border custom-table"
+      >
+      </v-data-table>
+    </v-col>
+  </v-row>
+  <!-- </teleport> -->
 </template>
 
 <script setup lang="ts">

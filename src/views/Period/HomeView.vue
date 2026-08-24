@@ -1,11 +1,11 @@
 <template>
-  <div class="d-flex align-center">
+  <div class="d-flex align-center no-print">
     <h3>目前期別：{{ period.name }}</h3>
     <v-spacer> </v-spacer>
     <v-btn color="grey-darken-1" variant="outlined" elevation="1" :to="`/`"> 上一頁 </v-btn>
   </div>
 
-  <v-tabs color="primary">
+  <v-tabs color="primary" class="no-print">
     <v-tab :to="`/periods/${period.id}/items`">品項清單</v-tab>
     <v-tab :to="`/periods/${period.id}/locations`">據點清單</v-tab>
   </v-tabs>

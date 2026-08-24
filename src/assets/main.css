@@ -9,7 +9,10 @@
 
 @media print {
   /* 隱藏頁面上所有的東西（包括 Vuetify 的各個層級） */
-  #app {
+  /* #app {
+    display: none !important;
+  } */
+  .no-print {
     display: none !important;
   }
 }
