@@ -3,7 +3,7 @@
     <v-btn
       icon
       color="surface-variant"
-      class="position-fixed ma-4 ma-md-8 right-0 bottom-12"
+      class="position-fixed ma-4 ma-md-8 right-0 bottom-12 no-print"
       @click="dialogFirstBox = true"
     >
       <v-icon>mdi-package-variant-closed-check</v-icon>

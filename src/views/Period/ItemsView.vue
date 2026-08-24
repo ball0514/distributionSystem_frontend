@@ -309,10 +309,20 @@ async function print() {
   await nextTick()
 
   // 觸發瀏覽器列印
-  window.print()
-  printItemsStore.changePrintStatus()
-  // selectedItems.value = []
-  // printItemsStore.setPrintItems(selectedItems.value)
+  setTimeout(() => {
+    window.print()
+
+    // 監聽結束事件以還原狀態
+    window.addEventListener(
+      'afterprint',
+      () => {
+        printItemsStore.changePrintStatus()
+      },
+      { once: true },
+    )
+    // selectedItems.value = []
+    // printItemsStore.setPrintItems(selectedItems.value)
+  }, 300)
 }
 </script>
 

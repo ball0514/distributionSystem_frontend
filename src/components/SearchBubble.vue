@@ -1,6 +1,10 @@
 <template>
   <teleport to="body">
-    <v-btn icon class="position-fixed ma-4 ma-md-8 right-0 bottom-0" @click="openSearchItemDialog">
+    <v-btn
+      icon
+      class="position-fixed ma-4 ma-md-8 right-0 bottom-0 no-print"
+      @click="openSearchItemDialog"
+    >
       <v-icon>mdi-magnify</v-icon>
     </v-btn>
   </teleport>
