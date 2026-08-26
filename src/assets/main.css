@@ -61,10 +61,10 @@
   } */
 
   /* 3. （可選）確保每一頁頂部都會重複顯示表頭 (thead) */
-  /* .v-data-table thead {
+  .v-data-table thead {
     display: table-header-group !important;
     break-inside: avoid !important;
-  } */
+  }
 }
 
 @page {
