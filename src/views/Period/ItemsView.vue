@@ -324,15 +324,23 @@ async function print(type: string) {
       window.removeEventListener('afterprint', handlePrintDone)
     }
 
-    // 1. 針對 Safari / 支援 afterprint 的非同步瀏覽器
+    // 1. 主要方案：標準 afterprint 事件
     window.addEventListener('afterprint', handlePrintDone, { once: true })
 
-    // 2. 觸發列印
-    window.print()
+    // 2. 輔助保險：監聽媒體查詢變化（適用於極少數 afterprint 丟失但支援 matchMedia 的 WebKit/Safari 環境）
+    const mediaQueryList = window.matchMedia('print')
+    const mediaChangeHandler = (mql: MediaQueryListEvent): void => {
+      if (!mql.matches) {
+        handlePrintDone()
+        mediaQueryList.removeEventListener('change', mediaChangeHandler)
+      }
+    }
+    if (mediaQueryList.addEventListener) {
+      mediaQueryList.addEventListener('change', mediaChangeHandler)
+    }
 
-    // 3. 針對 Chrome / Edge 等同步阻塞的瀏覽器
-    // 當 print() 視窗關閉後，JS 才會走到這裡立即觸發
-    handlePrintDone()
+    // 3. 呼叫列印（不要在底下放 handlePrintDone()）
+    window.print()
   }, 300)
 }
 </script>
