@@ -1,23 +1,37 @@
 <template>
   <!-- <teleport to="body"> -->
   <div class="print-container">
-    <v-row v-for="(rowGroup, rowIndex) in printRows" :key="rowIndex" class="print-row gap-2">
-      <v-col cols="4" v-for="item in rowGroup" :key="item.id" class="print-col">
-        <div class="print-card">
-          <p class="text-center">{{ item.code }}</p>
-          <v-data-table
-            :headers="headers"
-            :items="Object.entries(item.pack?.detail ?? {})"
-            :items-per-page="-1"
-            item-value="id"
-            hide-default-footer
-            no-data-text="無"
-            class="border custom-table"
-          >
-          </v-data-table>
-        </div>
-      </v-col>
-    </v-row>
+    <template v-if="printItemsStore.selectPrintType === 'notDelivered'">
+      <v-data-table
+        :headers="headersDeliver"
+        :items="printItemsStore.selectPrintItems"
+        :items-per-page="-1"
+        item-value="id"
+        hide-default-footer
+        no-data-text="無"
+        class="border custom-table"
+      >
+      </v-data-table>
+    </template>
+    <template v-if="printItemsStore.selectPrintType === 'needToCount'">
+      <v-row v-for="(rowGroup, rowIndex) in printRows" :key="rowIndex" class="print-row gap-2">
+        <v-col cols="4" v-for="item in rowGroup" :key="item.id" class="print-col">
+          <div class="print-card">
+            <p class="text-center">{{ item.code }}</p>
+            <v-data-table
+              :headers="headersCount"
+              :items="Object.entries(item.pack?.detail ?? {})"
+              :items-per-page="-1"
+              item-value="id"
+              hide-default-footer
+              no-data-text="無"
+              class="border custom-table"
+            >
+            </v-data-table>
+          </div>
+        </v-col>
+      </v-row>
+    </template>
   </div>
   <!-- </teleport> -->
 </template>
@@ -28,7 +42,36 @@ import { usePrintItemsStore } from '@/stores/usePrintItemsStore'
 
 const printItemsStore = usePrintItemsStore()
 
-const headers = [
+const headersDeliver = [
+  {
+    title: '編號',
+    value: 'code',
+    sortable: false,
+    headerProps: {
+      class: 'bg-surface-variant text-white font-weight-bold',
+      style: 'width: 100px;',
+    },
+  },
+  {
+    title: '名稱',
+    value: 'name',
+    sortable: false,
+    headerProps: {
+      class: 'bg-surface-variant text-white font-weight-bold',
+    },
+  },
+  {
+    title: '總數',
+    value: 'total',
+    sortable: false,
+    headerProps: {
+      class: 'bg-surface-variant text-white font-weight-bold',
+      style: 'width: 100px;',
+    },
+  },
+]
+
+const headersCount = [
   {
     title: '單位',
     value: '0',

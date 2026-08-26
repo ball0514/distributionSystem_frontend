@@ -39,7 +39,8 @@
     <div class="d-flex align-center">
       <v-switch label="選取列印模式" v-model="showSelect" hide-details />
       <v-spacer />
-      <v-btn @click="print" v-if="showSelect">列印</v-btn>
+      <v-btn @click="print('notDelivered')" v-if="showSelect" class="ms-2">列印未送達</v-btn>
+      <v-btn @click="print('needToCount')" v-if="showSelect" class="ms-2">列印零數表</v-btn>
     </div>
 
     <v-data-table
@@ -128,12 +129,12 @@ const loadItems = async () => {
 
       const queryCount = route.query.count
       if (typeof queryCount === 'string') {
-        filterCount.value = Boolean(queryCount)
+        filterCount.value = JSON.parse(queryCount)
       }
 
       const queryDistribute = route.query.distribute
       if (typeof queryDistribute === 'string') {
-        filterDistribute.value = Boolean(queryDistribute)
+        filterDistribute.value = JSON.parse(queryDistribute)
       }
     }
   } catch (error) {
@@ -295,6 +296,8 @@ const getRowClass = ({ index, item }: { index: number; item: Items }) => {
     return { class: 'bg-yellow-lighten-4' }
   } else if (index % 2 === 0) {
     return { class: 'bg-grey-lighten-3' }
+  } else {
+    return { class: 'bg-white' }
   }
 }
 
@@ -302,26 +305,34 @@ import { usePrintItemsStore } from '@/stores/usePrintItemsStore'
 
 const printItemsStore = usePrintItemsStore()
 
-async function print() {
-  printItemsStore.changePrintStatus()
-  printItemsStore.setPrintItems(selectedItems.value)
+async function print(type: string) {
+  printItemsStore.changePrintStatus(true)
+  printItemsStore.setPrintItems(type, selectedItems.value)
 
   await nextTick()
 
   // 觸發瀏覽器列印
   setTimeout(() => {
+    let isHandled = false
+
+    // 定義統一的還原函式
+    const handlePrintDone = () => {
+      if (isHandled) return
+      isHandled = true
+
+      printItemsStore.changePrintStatus(false)
+      window.removeEventListener('afterprint', handlePrintDone)
+    }
+
+    // 1. 針對 Safari / 支援 afterprint 的非同步瀏覽器
+    window.addEventListener('afterprint', handlePrintDone, { once: true })
+
+    // 2. 觸發列印
     window.print()
 
-    // 監聽結束事件以還原狀態
-    window.addEventListener(
-      'afterprint',
-      () => {
-        printItemsStore.changePrintStatus()
-      },
-      { once: true },
-    )
-    // selectedItems.value = []
-    // printItemsStore.setPrintItems(selectedItems.value)
+    // 3. 針對 Chrome / Edge 等同步阻塞的瀏覽器
+    // 當 print() 視窗關閉後，JS 才會走到這裡立即觸發
+    handlePrintDone()
   }, 300)
 }
 </script>
