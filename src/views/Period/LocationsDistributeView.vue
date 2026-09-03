@@ -273,7 +273,7 @@ onMounted(() => {
   period.value = periodStore.currentPeriod
 })
 
-const tab = ref('one')
+const tab = ref('fast')
 
 const locationsList = ref<Items[]>([])
 const recordsList = ref<Records[]>([])
