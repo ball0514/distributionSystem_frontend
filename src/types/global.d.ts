@@ -38,6 +38,7 @@ declare global {
       quantity: number
       status: number
       box?: boolean
+      date: Date | string | null
     }
   }
 
@@ -58,6 +59,7 @@ declare global {
     location_name: string
     quantity: number
     status: number
+    date: Date | string | null
   }
 
   // 未來也可以加其他全域型別

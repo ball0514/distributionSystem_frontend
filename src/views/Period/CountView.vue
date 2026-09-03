@@ -38,6 +38,9 @@
     <template v-if="!!itemsList[0]?.pack?.box">
       ，共 {{ boxTotal }} 箱，留 {{ boxCount }} 箱，拆 {{ boxTotal - boxCount }} 箱
     </template>
+    <template v-if="itemsList[0]?.type === '釘' || itemsList[0]?.type === '摺'">
+      ，共 {{ packTotal }} 疊，包含完整 {{ packQuotient }} 疊，零數 {{ packRemainder }} 個
+    </template>
   </p>
 
   <v-dialog v-model="dialogEditTypePackSize" width="360" persistent>
@@ -84,15 +87,18 @@
       >
         <template v-slot:[`item.1.status`]="{ item }">
           <v-checkbox
-            v-model="item[1].status"
+            :model-value="item[1].status"
             :label="`${item[1].status ? 'OK' : 'NO'}`"
             :color="`${item[1].status ? 'green' : ''}`"
             :true-value="1"
             :false-value="0"
-            @update:model-value="itemEdit('packDetail', itemsListObj)"
+            @update:model-value="openCancelDialog($event, item[0], itemsListObj)"
             hide-details
           >
           </v-checkbox>
+        </template>
+        <template v-slot:[`item.1.date`]="{ item }">
+          {{ twDateString(item[1].date) }}
         </template>
       </v-data-table>
     </v-col>
@@ -139,6 +145,28 @@
           <v-spacer></v-spacer>
 
           <v-btn color="primary" variant="flat" @click="recordEdit()">確認</v-btn>
+        </v-card-actions>
+      </v-card>
+    </template>
+  </v-dialog>
+
+  <v-dialog v-model="dialogCancel" width="360" persistent>
+    <template v-slot:default>
+      <v-card title="取消">
+        <v-divider></v-divider>
+
+        <v-card-text class="px-4">
+          <p>確定要取消數量【{{ countCancelItem }}】嗎？</p>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-btn @click="dialogCancel = false">取消</v-btn>
+
+          <v-spacer></v-spacer>
+
+          <v-btn color="red-darken-1" variant="flat" @click="countCancel()">確認</v-btn>
         </v-card-actions>
       </v-card>
     </template>
@@ -264,6 +292,24 @@ const boxCount = computed(() => {
   )
 })
 
+const packTotal = computed(() => {
+  return itemsList.value[0]?.total && itemsList.value[0]?.pack?.size
+    ? Math.ceil(itemsList.value[0]?.total / itemsList.value[0]?.pack?.size)
+    : 0
+})
+
+const packQuotient = computed(() => {
+  return itemsList.value[0]?.total && itemsList.value[0]?.pack?.size
+    ? Math.floor(itemsList.value[0]?.total / itemsList.value[0]?.pack?.size)
+    : 0
+})
+
+const packRemainder = computed(() => {
+  return itemsList.value[0]?.total && itemsList.value[0]?.pack?.size
+    ? itemsList.value[0]?.total - packQuotient.value * itemsList.value[0]?.pack?.size
+    : 0
+})
+
 const totalObj = ref<PackDetail>({})
 
 const loadRecords = async () => {
@@ -278,39 +324,62 @@ const loadRecords = async () => {
 
       totalObj.value = {}
 
-      recordsList.value.forEach((item) => {
-        const keep = itemsList.value[0]?.pack?.box ?? 0
-        if (keep) {
-          totalObj.value[keep] = totalObj.value[keep] || { quantity: 0, status: 1, box: true }
-          totalObj.value[keep].quantity =
-            (totalObj.value[keep].quantity || 0) +
-            Math.floor(item.quantity / (itemsList.value[0]?.pack?.box ?? 1))
-          totalObj.value[keep].box = true
-        }
+      const now = new Date()
 
-        const divisor = itemsList.value[0]?.pack?.size ?? 1
-
-        // 計算可以分出幾組
-        const quotient = keep
-          ? Math.floor((item.quantity % (itemsList.value[0]?.pack?.box ?? 1)) / divisor)
-          : Math.floor(item.quantity / divisor)
-        if (quotient > 0) {
-          totalObj.value[divisor] = totalObj.value[divisor] || { quantity: 0, status: 0 }
-          totalObj.value[divisor].quantity = (totalObj.value[divisor].quantity || 0) + quotient
-        }
-
-        // 計算剩下的餘數
-        const remainder = keep
-          ? (item.quantity % (itemsList.value[0]?.pack?.box ?? 1)) % divisor
-          : item.quantity % divisor
-        if (remainder > 0) {
-          totalObj.value[remainder] = totalObj.value[remainder] || {
-            quantity: 0,
-            status: 0,
+      if (itemsList.value[0]?.pack) {
+        recordsList.value.forEach((item) => {
+          const keep = itemsList.value[0]?.pack?.box ?? 0
+          if (keep) {
+            totalObj.value[keep] = totalObj.value[keep] || {
+              quantity: 0,
+              status: 0,
+              box: true,
+              date: null,
+            }
+            totalObj.value[keep].quantity =
+              (totalObj.value[keep].quantity || 0) +
+              Math.floor(item.quantity / (itemsList.value[0]?.pack?.box ?? 1))
+            totalObj.value[keep].box = true
+            totalObj.value[keep].date = totalObj.value[keep].status
+              ? itemsList.value[0]?.pack?.detail?.[keep]?.date || now
+              : null
           }
-          totalObj.value[remainder].quantity = (totalObj.value[remainder].quantity || 0) + 1
-        }
-      })
+
+          const divisor = itemsList.value[0]?.pack?.size ?? 1
+
+          // 計算可以分出幾組
+          const quotient = keep
+            ? Math.floor((item.quantity % (itemsList.value[0]?.pack?.box ?? 1)) / divisor)
+            : Math.floor(item.quantity / divisor)
+          if (quotient > 0) {
+            totalObj.value[divisor] = totalObj.value[divisor] || {
+              quantity: 0,
+              status: 0,
+              date: null,
+            }
+            totalObj.value[divisor].quantity = (totalObj.value[divisor].quantity || 0) + quotient
+            totalObj.value[divisor].date = totalObj.value[divisor].status
+              ? itemsList.value[0]?.pack?.detail?.[divisor]?.date || now
+              : null
+          }
+
+          // 計算剩下的餘數
+          const remainder = keep
+            ? (item.quantity % (itemsList.value[0]?.pack?.box ?? 1)) % divisor
+            : item.quantity % divisor
+          if (remainder > 0) {
+            totalObj.value[remainder] = totalObj.value[remainder] || {
+              quantity: 0,
+              status: 0,
+              date: null,
+            }
+            totalObj.value[remainder].quantity = (totalObj.value[remainder].quantity || 0) + 1
+            totalObj.value[remainder].date = totalObj.value[remainder].status
+              ? itemsList.value[0]?.pack?.detail?.[remainder]?.date || now
+              : null
+          }
+        })
+      }
 
       Object.entries(totalObj.value).forEach(([key, value]) => {
         if (
@@ -412,7 +481,16 @@ async function itemEdit(content: string, obj?: PackDetail): Promise<void> {
         box: itemEditPackBox.value,
         detail: {},
       }
-      payload.pack.detail = obj
+
+      const now = new Date()
+      payload.pack.detail = Object.fromEntries(
+        Object.entries(obj ?? {}).map(([key, detail]) => [
+          key,
+          detail?.status
+            ? { ...detail, date: itemsList.value[0]?.pack?.detail?.[key]?.date || now }
+            : { ...detail, date: null },
+        ]),
+      )
     }
     payload.pack = JSON.stringify(payload.pack)
     await apiClient.put('/api/items/edit', payload)
@@ -441,7 +519,58 @@ async function itemEdit(content: string, obj?: PackDetail): Promise<void> {
       dialogEditTypePackSize.value = false
       statusDialog.value.show = true
     }
+
+    if (content === 'packDetail') {
+      dialogCancel.value = false
+    }
   }
+}
+
+function twDateString(dateStr: Date | string | null) {
+  if (dateStr) {
+    const date = new Date(dateStr)
+
+    return new Intl.DateTimeFormat('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    })
+      .format(date)
+      .replace(/\//g, '-')
+  }
+}
+
+const dialogCancel = ref(false)
+const countCancelItem = ref<string>('')
+const countCancelObject = ref<PackDetail>({})
+
+function openCancelDialog(newVal: number | null, count: string, obj: PackDetail) {
+  if (newVal) {
+    const checkItem = itemsListObj.value[Number(count)]
+    if (checkItem) {
+      checkItem.status = 1
+    }
+
+    itemEdit('packDetail', obj)
+  } else {
+    countCancelItem.value = count
+    countCancelObject.value = obj
+    dialogCancel.value = true
+  }
+}
+
+function countCancel() {
+  const cancelItem = countCancelObject.value[countCancelItem.value]
+  if (cancelItem) {
+    cancelItem.status = 0
+  }
+
+  itemEdit('packDetail', countCancelObject.value)
 }
 
 const headersPack = [
@@ -460,6 +589,7 @@ const headersPack = [
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
+      style: 'width: 100px;',
     },
   },
   {
@@ -468,7 +598,16 @@ const headersPack = [
     sortable: false,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
-      style: 'width: 160px;',
+      style: 'width: 100px;',
+    },
+  },
+  {
+    title: '完成時間',
+    value: '1.date',
+    sortable: true,
+    headerProps: {
+      class: 'bg-surface-variant text-white font-weight-bold',
+      style: 'width: 120px;',
     },
   },
 ]
@@ -521,6 +660,7 @@ const itemEditObject = ref<Records>({
   location_name: '',
   quantity: 0,
   status: 0,
+  date: null,
 })
 const dialogEditQuantity = ref(false)
 
