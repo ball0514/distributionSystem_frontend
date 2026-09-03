@@ -35,11 +35,59 @@
     <v-row>
       <v-col cols="12" md="6">
         <v-tabs v-model="tab" color="primary">
-          <v-tab value="one">一欄快速點擊</v-tab>
-          <v-tab value="two">兩欄分類資料</v-tab>
+          <v-tab value="fast" @click="reloadNOList">未配送快速點擊</v-tab>
+          <v-tab value="one">一欄全部瀏覽</v-tab>
+          <v-tab value="two">兩欄分類瀏覽</v-tab>
         </v-tabs>
 
         <v-tabs-window v-model="tab">
+          <v-tabs-window-item value="fast">
+            <v-data-table
+              :headers="headers"
+              :items="recordsNOList"
+              :items-per-page="-1"
+              item-value="record_id"
+              :row-props="getRowClass"
+              hide-default-footer
+              no-data-text="DONE"
+              class="border"
+            >
+              <template v-slot:no-data>
+                <div class="py-8 text-center text-green-darken-1">
+                  <v-icon size="48" color="green-lighten-1" class="mb-2">
+                    mdi-package-variant-closed-check
+                  </v-icon>
+                  <div class="text-h6 font-weight-bold">DONE</div>
+                </div>
+              </template>
+
+              <template v-slot:[`item.location_name`]="{ item }">
+                <v-btn
+                  variant="text"
+                  :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
+                >
+                  {{ item.location_name }}
+                </v-btn>
+              </template>
+
+              <template v-slot:[`item.status`]="{ item }">
+                <v-checkbox
+                  :model-value="item.status"
+                  :label="`${item.status ? 'OK' : 'NO'}`"
+                  :color="`${item.status ? 'green' : ''}`"
+                  :true-value="1"
+                  :false-value="0"
+                  @update:model-value="openCancelDialog($event, item)"
+                  hide-details
+                >
+                </v-checkbox>
+              </template>
+
+              <template v-slot:[`item.date`]="{ item }">
+                {{ twDateString(item.date) }}
+              </template>
+            </v-data-table>
+          </v-tabs-window-item>
           <v-tabs-window-item value="one">
             <v-data-table
               :headers="headers"
@@ -60,7 +108,7 @@
                 </v-btn>
               </template>
 
-              <template v-slot:[`item.actions`]="{ item }">
+              <template v-slot:[`item.status`]="{ item }">
                 <v-checkbox
                   :model-value="item.status"
                   :label="`${item.status ? 'OK' : 'NO'}`"
@@ -99,7 +147,7 @@
                 </v-btn>
               </template>
 
-              <template v-slot:[`item.actions`]="{ item }">
+              <template v-slot:[`item.status`]="{ item }">
                 <v-checkbox
                   :model-value="item.status"
                   :label="`${item.status ? 'OK' : 'NO'}`"
@@ -137,7 +185,7 @@
                 </v-btn>
               </template>
 
-              <template v-slot:[`item.actions`]="{ item }">
+              <template v-slot:[`item.status`]="{ item }">
                 <v-checkbox
                   :model-value="item.status"
                   :label="`${item.status ? 'OK' : 'NO'}`"
@@ -248,11 +296,12 @@ onMounted(() => {
   period.value = periodStore.currentPeriod
 })
 
-const tab = ref('one')
+const tab = ref('fast')
 
 const itemsList = ref<Items[]>([])
 const itemsListObj = ref<PackDetail>({})
 const recordsList = ref<Records[]>([])
+const recordsNOList = ref<Records[]>([])
 
 const loadItems = async () => {
   try {
@@ -309,6 +358,10 @@ const typeClass = (type: string) => {
 
 const totalObj = ref<PackDetail>({})
 
+function reloadNOList() {
+  recordsNOList.value = recordsList.value.filter((item) => !item.status)
+}
+
 const loadRecords = async () => {
   try {
     const result = await apiClient.post('/api/records/search', {
@@ -320,6 +373,7 @@ const loadRecords = async () => {
       recordsList.value = result.data.data
 
       recordsList.value = recordsList.value.filter((record) => record.quantity > 0)
+      reloadNOList()
 
       totalObj.value = {}
 
@@ -405,8 +459,8 @@ const headers = [
   },
   {
     title: '操作',
-    value: 'actions',
-    sortable: false,
+    value: 'status',
+    sortable: true,
     headerProps: {
       class: 'bg-surface-variant text-white font-weight-bold',
       style: 'width: 100px;',

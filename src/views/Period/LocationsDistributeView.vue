@@ -24,10 +24,62 @@
       }}</span>
     </p>
     <v-tabs v-model="tab" color="primary">
-      <v-tab value="one">一欄快速點擊</v-tab>
-      <v-tab value="two">兩欄分類資料</v-tab>
+      <v-tab value="fast" @click="reloadNOList">未配送快速點擊</v-tab>
+      <v-tab value="one">一欄全部瀏覽</v-tab>
+      <v-tab value="two">兩欄分類瀏覽</v-tab>
     </v-tabs>
+
     <v-tabs-window v-model="tab">
+      <v-tabs-window-item value="fast">
+        <v-data-table
+          :headers="headers"
+          :items="recordsNOList"
+          :items-per-page="-1"
+          item-value="record_id"
+          :row-props="getRowClass"
+          hide-default-footer
+          no-data-text="DONE"
+          class="border"
+        >
+          <template v-slot:no-data>
+            <div class="py-8 text-center text-green-darken-1">
+              <v-icon size="48" color="green-lighten-1" class="mb-2">
+                mdi-package-variant-closed-check
+              </v-icon>
+              <div class="text-h6 font-weight-bold">DONE</div>
+            </div>
+          </template>
+
+          <template v-slot:[`item.code`]="{ item }">
+            <v-btn variant="text" :to="`/periods/${periodId}/items/${item.item_id}/distribute`">
+              {{ item.code }}
+            </v-btn>
+          </template>
+
+          <template v-slot:[`item.type`]="{ item }">
+            <v-chip variant="flat" v-if="item.type" :color="typeClass(item.type)">
+              {{ item.type }}
+            </v-chip>
+          </template>
+
+          <template v-slot:[`item.actions`]="{ item }">
+            <v-checkbox
+              :model-value="item.status"
+              :label="`${item.status ? 'OK' : 'NO'}`"
+              :color="`${item.status ? 'green' : ''}`"
+              :true-value="1"
+              :false-value="0"
+              @update:model-value="openCancelDialog($event, item)"
+              hide-details
+            >
+            </v-checkbox>
+          </template>
+
+          <template v-slot:[`item.date`]="{ item }">
+            {{ twDateString(item.date) }}
+          </template>
+        </v-data-table>
+      </v-tabs-window-item>
       <v-tabs-window-item value="one">
         <v-data-table
           :headers="headers"
@@ -225,6 +277,7 @@ const tab = ref('one')
 
 const locationsList = ref<Items[]>([])
 const recordsList = ref<Records[]>([])
+const recordsNOList = ref<Records[]>([])
 
 const loadLocations = async () => {
   try {
@@ -252,10 +305,16 @@ const loadRecords = async () => {
       recordsList.value = result.data.data
 
       recordsList.value = recordsList.value.filter((record) => record.quantity > 0)
+
+      reloadNOList()
     }
   } catch (error) {
     console.error('撈取明細失敗:', error)
   }
+}
+
+function reloadNOList() {
+  recordsNOList.value = recordsList.value.filter((item) => !item.status)
 }
 
 onMounted(() => {
