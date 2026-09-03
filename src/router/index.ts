@@ -45,20 +45,38 @@ const router = createRouter({
       path: '/periods/:periodId/items/:itemId/count',
       name: 'period-items-count',
       component: () => import('../views/Period/CountView.vue'),
+      meta: { scrollToTop: true }, // 只有這個頁面強制置頂
     },
     {
       path: '/periods/:periodId/items/:itemId/distribute',
       name: 'period-items-distribute',
       component: () => import('../views/Period/ItemsDistributeView.vue'),
+      meta: { scrollToTop: true }, // 只有這個頁面強制置頂
     },
     {
       path: '/periods/:periodId/locations/:locationId/distribute',
       name: 'period-locations-distribute',
       component: () => import('../views/Period/LocationsDistributeView.vue'),
+      meta: { scrollToTop: true }, // 只有這個頁面強制置頂
     },
   ],
-  scrollBehavior() {
-    return { top: 0, left: 0, behavior: 'instant' }
+  scrollBehavior(to, from, savedPosition) {
+    // 若目標路由設定了 scrollToTop，強制滾回頂端
+    if (to.meta.scrollToTop) {
+      return { top: 0, left: 0, behavior: 'instant' }
+    }
+
+    // 如果使用者按上一頁/下一頁，還原上一頁的滾動位置（若無則不變動）
+    if (savedPosition) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(savedPosition)
+        }, 300)
+      })
+    }
+
+    // 其他頁面不強制作任何滾動
+    return false
   },
 })
 

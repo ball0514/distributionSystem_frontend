@@ -1,8 +1,8 @@
 import './assets/main.css'
 
-if ('scrollRestoration' in history) {
-  history.scrollRestoration = 'manual'
-}
+// if ('scrollRestoration' in history) {
+//   history.scrollRestoration = 'manual'
+// }
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
