@@ -57,6 +57,9 @@ const router = createRouter({
       component: () => import('../views/Period/LocationsDistributeView.vue'),
     },
   ],
+  scrollBehavior() {
+    return { top: 0, left: 0, behavior: 'instant' }
+  },
 })
 
 export default router

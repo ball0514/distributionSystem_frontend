@@ -1,16 +1,18 @@
 <template>
-  <div class="d-flex align-center no-print">
+  <v-app-bar app fixed class="px-8 no-print">
     <h3>目前期別：{{ period.name }}</h3>
     <v-spacer> </v-spacer>
     <v-btn color="grey-darken-1" variant="outlined" elevation="1" :to="`/`"> 上一頁 </v-btn>
-  </div>
+  </v-app-bar>
 
-  <v-tabs color="primary" class="no-print">
-    <v-tab :to="`/periods/${period.id}/items`">品項清單</v-tab>
-    <v-tab :to="`/periods/${period.id}/locations`">據點清單</v-tab>
-  </v-tabs>
+  <v-main>
+    <v-tabs color="primary" class="no-print">
+      <v-tab :to="`/periods/${period.id}/items`">品項清單</v-tab>
+      <v-tab :to="`/periods/${period.id}/locations`">據點清單</v-tab>
+    </v-tabs>
 
-  <RouterView />
+    <RouterView />
+  </v-main>
 </template>
 
 <script setup lang="ts">

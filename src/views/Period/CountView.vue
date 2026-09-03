@@ -4,8 +4,7 @@
     :type="statusDialog.type"
     :message="statusDialog.message"
   />
-
-  <div class="d-flex align-center">
+  <v-app-bar app fixed class="px-8">
     <h2>
       品項數量模式
       <small class="font-weight-regular text-grey-lighten-1">目前期別：{{ period.name }}</small>
@@ -13,164 +12,166 @@
     <v-spacer> </v-spacer>
     <v-btn color="grey-darken-1" variant="text" :to="`/periods/${periodId}/items`"> 回清單 </v-btn>
     <v-btn color="grey-darken-1" variant="outlined" elevation="1" @click="goBack"> 上一頁 </v-btn>
-  </div>
+  </v-app-bar>
 
-  <p>
-    目前品項：<span class="text-display-small font-weight-bold text-primary">{{
-      itemsList[0]?.code
-    }}</span
-    >_{{ itemsList[0]?.name }}
-  </p>
-  <p>
-    類型：
-    <v-chip variant="flat" v-if="itemsList[0]?.type" :color="typeClass(itemsList[0]?.type)">
-      {{ itemsList[0]?.type }}
-    </v-chip>
-    <span class="ml-2"
-      >{{ itemsList[0]?.pack?.box ?? 0 }} / 箱，{{ itemsList[0]?.pack?.size }} / 疊</span
-    >
-    <v-btn variant="text" icon @click="dialogEditTypePackSize = true">
-      <v-icon>mdi-pencil</v-icon>
-    </v-btn>
-  </p>
-  <p>
-    總數：{{ itemsList[0]?.total }}
-    <template v-if="!!itemsList[0]?.pack?.box">
-      ，共 {{ boxTotal }} 箱，留 {{ boxCount }} 箱，拆 {{ boxTotal - boxCount }} 箱
-    </template>
-    <template v-if="itemsList[0]?.type === '釘' || itemsList[0]?.type === '摺'">
-      ，共 {{ packTotal }} 疊，包含完整 {{ packQuotient }} 疊，零數 {{ packRemainder }} 個
-    </template>
-  </p>
-
-  <v-dialog v-model="dialogEditTypePackSize" width="360" persistent>
-    <template v-slot:default>
-      <v-card title="編輯">
-        <v-divider></v-divider>
-
-        <v-card-text class="px-4">
-          <v-select
-            v-model="itemEditType"
-            label="類型"
-            :items="typeOptions"
-            item-title="text"
-            item-value="val"
-          >
-          </v-select>
-          <v-text-field label="一箱數量" type="number" v-model="itemEditPackBox"></v-text-field>
-          <v-text-field label="一疊數量" type="number" v-model="itemEditPackSize"></v-text-field>
-        </v-card-text>
-
-        <v-divider></v-divider>
-
-        <v-card-actions>
-          <v-btn @click="dialogEditTypePackSize = false">取消</v-btn>
-
-          <v-spacer></v-spacer>
-
-          <v-btn color="primary" variant="flat" @click="itemEdit('typePackSize')">確認</v-btn>
-        </v-card-actions>
-      </v-card>
-    </template>
-  </v-dialog>
-
-  <v-row>
-    <v-col cols="12" md="6">
-      <v-data-table
-        :headers="headersPack"
-        :items="Object.entries(itemsListObj)"
-        :items-per-page="-1"
-        :row-props="getRowClass"
-        hide-default-footer
-        no-data-text="無"
-        class="border"
+  <v-main>
+    <p>
+      目前品項：<span class="text-display-small font-weight-bold text-primary">{{
+        itemsList[0]?.code
+      }}</span
+      >_{{ itemsList[0]?.name }}
+    </p>
+    <p>
+      類型：
+      <v-chip variant="flat" v-if="itemsList[0]?.type" :color="typeClass(itemsList[0]?.type)">
+        {{ itemsList[0]?.type }}
+      </v-chip>
+      <span class="ml-2"
+        >{{ itemsList[0]?.pack?.box ?? 0 }} / 箱，{{ itemsList[0]?.pack?.size }} / 疊</span
       >
-        <template v-slot:[`item.1.status`]="{ item }">
-          <v-checkbox
-            :model-value="item[1].status"
-            :label="`${item[1].status ? 'OK' : 'NO'}`"
-            :color="`${item[1].status ? 'green' : ''}`"
-            :true-value="1"
-            :false-value="0"
-            @update:model-value="openCancelDialog($event, item[0], itemsListObj)"
-            hide-details
-          >
-          </v-checkbox>
-        </template>
-        <template v-slot:[`item.1.date`]="{ item }">
-          {{ twDateString(item[1].date) }}
-        </template>
-      </v-data-table>
-    </v-col>
+      <v-btn variant="text" icon @click="dialogEditTypePackSize = true">
+        <v-icon>mdi-pencil</v-icon>
+      </v-btn>
+    </p>
+    <p>
+      總數：{{ itemsList[0]?.total }}
+      <template v-if="!!itemsList[0]?.pack?.box">
+        ，共 {{ boxTotal }} 箱，留 {{ boxCount }} 箱，拆 {{ boxTotal - boxCount }} 箱
+      </template>
+      <template v-if="itemsList[0]?.type === '釘' || itemsList[0]?.type === '摺'">
+        ，共 {{ packTotal }} 疊，包含完整 {{ packQuotient }} 疊，零數 {{ packRemainder }} 個
+      </template>
+    </p>
 
-    <v-col cols="12" md="6">
-      <v-data-table
-        :headers="headers"
-        :items="recordsList"
-        :items-per-page="-1"
-        item-value="record_id"
-        :row-props="getRowClass"
-        hide-default-footer
-        no-data-text="無"
-        class="border"
-      >
-        <template v-slot:[`item.actions`]="{ item }">
-          <v-btn variant="text" icon @click="openEditQuantityDialog(item)">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-        </template>
-      </v-data-table>
-    </v-col>
-  </v-row>
+    <v-dialog v-model="dialogEditTypePackSize" width="360" persistent>
+      <template v-slot:default>
+        <v-card title="編輯">
+          <v-divider></v-divider>
 
-  <v-dialog v-model="dialogEditQuantity" width="360" persistent>
-    <template v-slot:default>
-      <v-card title="編輯">
-        <v-divider></v-divider>
+          <v-card-text class="px-4">
+            <v-select
+              v-model="itemEditType"
+              label="類型"
+              :items="typeOptions"
+              item-title="text"
+              item-value="val"
+            >
+            </v-select>
+            <v-text-field label="一箱數量" type="number" v-model="itemEditPackBox"></v-text-field>
+            <v-text-field label="一疊數量" type="number" v-model="itemEditPackSize"></v-text-field>
+          </v-card-text>
 
-        <v-card-text class="px-4">
-          <v-text-field
-            label="數量"
-            type="number"
-            v-model="itemEditObject.quantity"
-            style="width: 300px"
-          ></v-text-field>
-        </v-card-text>
+          <v-divider></v-divider>
 
-        <v-divider></v-divider>
+          <v-card-actions>
+            <v-btn @click="dialogEditTypePackSize = false">取消</v-btn>
 
-        <v-card-actions>
-          <v-btn @click="dialogEditQuantity = false">取消</v-btn>
+            <v-spacer></v-spacer>
 
-          <v-spacer></v-spacer>
+            <v-btn color="primary" variant="flat" @click="itemEdit('typePackSize')">確認</v-btn>
+          </v-card-actions>
+        </v-card>
+      </template>
+    </v-dialog>
 
-          <v-btn color="primary" variant="flat" @click="recordEdit()">確認</v-btn>
-        </v-card-actions>
-      </v-card>
-    </template>
-  </v-dialog>
+    <v-row>
+      <v-col cols="12" md="6">
+        <v-data-table
+          :headers="headersPack"
+          :items="Object.entries(itemsListObj)"
+          :items-per-page="-1"
+          :row-props="getRowClass"
+          hide-default-footer
+          no-data-text="無"
+          class="border"
+        >
+          <template v-slot:[`item.1.status`]="{ item }">
+            <v-checkbox
+              :model-value="item[1].status"
+              :label="`${item[1].status ? 'OK' : 'NO'}`"
+              :color="`${item[1].status ? 'green' : ''}`"
+              :true-value="1"
+              :false-value="0"
+              @update:model-value="openCancelDialog($event, item[0], itemsListObj)"
+              hide-details
+            >
+            </v-checkbox>
+          </template>
+          <template v-slot:[`item.1.date`]="{ item }">
+            {{ twDateString(item[1].date) }}
+          </template>
+        </v-data-table>
+      </v-col>
 
-  <v-dialog v-model="dialogCancel" width="360" persistent>
-    <template v-slot:default>
-      <v-card title="取消">
-        <v-divider></v-divider>
+      <v-col cols="12" md="6">
+        <v-data-table
+          :headers="headers"
+          :items="recordsList"
+          :items-per-page="-1"
+          item-value="record_id"
+          :row-props="getRowClass"
+          hide-default-footer
+          no-data-text="無"
+          class="border"
+        >
+          <template v-slot:[`item.actions`]="{ item }">
+            <v-btn variant="text" icon @click="openEditQuantityDialog(item)">
+              <v-icon>mdi-pencil</v-icon>
+            </v-btn>
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
 
-        <v-card-text class="px-4">
-          <p>確定要取消數量【{{ countCancelItem }}】嗎？</p>
-        </v-card-text>
+    <v-dialog v-model="dialogEditQuantity" width="360" persistent>
+      <template v-slot:default>
+        <v-card title="編輯">
+          <v-divider></v-divider>
 
-        <v-divider></v-divider>
+          <v-card-text class="px-4">
+            <v-text-field
+              label="數量"
+              type="number"
+              v-model="itemEditObject.quantity"
+              style="width: 300px"
+            ></v-text-field>
+          </v-card-text>
 
-        <v-card-actions>
-          <v-btn @click="dialogCancel = false">取消</v-btn>
+          <v-divider></v-divider>
 
-          <v-spacer></v-spacer>
+          <v-card-actions>
+            <v-btn @click="dialogEditQuantity = false">取消</v-btn>
 
-          <v-btn color="red-darken-1" variant="flat" @click="countCancel()">確認</v-btn>
-        </v-card-actions>
-      </v-card>
-    </template>
-  </v-dialog>
+            <v-spacer></v-spacer>
+
+            <v-btn color="primary" variant="flat" @click="recordEdit()">確認</v-btn>
+          </v-card-actions>
+        </v-card>
+      </template>
+    </v-dialog>
+
+    <v-dialog v-model="dialogCancel" width="360" persistent>
+      <template v-slot:default>
+        <v-card title="取消">
+          <v-divider></v-divider>
+
+          <v-card-text class="px-4">
+            <p>確定要取消數量【{{ countCancelItem }}】嗎？</p>
+          </v-card-text>
+
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <v-btn @click="dialogCancel = false">取消</v-btn>
+
+            <v-spacer></v-spacer>
+
+            <v-btn color="red-darken-1" variant="flat" @click="countCancel()">確認</v-btn>
+          </v-card-actions>
+        </v-card>
+      </template>
+    </v-dialog>
+  </v-main>
 </template>
 
 <script setup lang="ts">

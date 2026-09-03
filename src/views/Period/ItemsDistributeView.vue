@@ -5,7 +5,7 @@
     :message="statusDialog.message"
   />
 
-  <div class="d-flex align-center">
+  <v-app-bar app fixed class="px-8">
     <h2>
       品項配送模式
       <small class="font-weight-regular text-grey-lighten-1">目前期別：{{ period.name }}</small>
@@ -13,194 +13,196 @@
     <v-spacer> </v-spacer>
     <v-btn color="grey-darken-1" variant="text" :to="`/periods/${periodId}/items`"> 回清單 </v-btn>
     <v-btn color="grey-darken-1" variant="outlined" elevation="1" @click="goBack"> 上一頁 </v-btn>
-  </div>
+  </v-app-bar>
 
-  <p>
-    目前品項：<span class="text-display-small font-weight-bold text-primary">{{
-      itemsList[0]?.code
-    }}</span
-    >_{{ itemsList[0]?.name }}
-  </p>
-  <p>
-    類型：
-    <v-chip variant="flat" v-if="itemsList[0]?.type" :color="typeClass(itemsList[0]?.type)">
-      {{ itemsList[0]?.type }}
-    </v-chip>
-    <span class="ml-2">{{ itemsList[0]?.pack?.size }}</span>
-  </p>
-  <p>總數：{{ itemsList[0]?.total }}</p>
-  <p>共 {{ recordsList.length }} 間</p>
+  <v-main>
+    <p>
+      目前品項：<span class="text-display-small font-weight-bold text-primary">{{
+        itemsList[0]?.code
+      }}</span
+      >_{{ itemsList[0]?.name }}
+    </p>
+    <p>
+      類型：
+      <v-chip variant="flat" v-if="itemsList[0]?.type" :color="typeClass(itemsList[0]?.type)">
+        {{ itemsList[0]?.type }}
+      </v-chip>
+      <span class="ml-2">{{ itemsList[0]?.pack?.size }}</span>
+    </p>
+    <p>總數：{{ itemsList[0]?.total }}</p>
+    <p>共 {{ recordsList.length }} 間</p>
 
-  <v-row>
-    <v-col cols="12" md="6">
-      <v-tabs v-model="tab" color="primary">
-        <v-tab value="one">一欄快速點擊</v-tab>
-        <v-tab value="two">兩欄分類資料</v-tab>
-      </v-tabs>
+    <v-row>
+      <v-col cols="12" md="6">
+        <v-tabs v-model="tab" color="primary">
+          <v-tab value="one">一欄快速點擊</v-tab>
+          <v-tab value="two">兩欄分類資料</v-tab>
+        </v-tabs>
 
-      <v-tabs-window v-model="tab">
-        <v-tabs-window-item value="one">
-          <v-data-table
-            :headers="headers"
-            :items="recordsList"
-            :items-per-page="-1"
-            item-value="record_id"
-            :row-props="getRowClass"
-            hide-default-footer
-            no-data-text="無"
-            class="border"
-          >
-            <template v-slot:[`item.location_name`]="{ item }">
-              <v-btn
-                variant="text"
-                :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
-              >
-                {{ item.location_name }}
-              </v-btn>
-            </template>
+        <v-tabs-window v-model="tab">
+          <v-tabs-window-item value="one">
+            <v-data-table
+              :headers="headers"
+              :items="recordsList"
+              :items-per-page="-1"
+              item-value="record_id"
+              :row-props="getRowClass"
+              hide-default-footer
+              no-data-text="無"
+              class="border"
+            >
+              <template v-slot:[`item.location_name`]="{ item }">
+                <v-btn
+                  variant="text"
+                  :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
+                >
+                  {{ item.location_name }}
+                </v-btn>
+              </template>
 
-            <template v-slot:[`item.actions`]="{ item }">
-              <v-checkbox
-                :model-value="item.status"
-                :label="`${item.status ? 'OK' : 'NO'}`"
-                :color="`${item.status ? 'green' : ''}`"
-                :true-value="1"
-                :false-value="0"
-                @update:model-value="openCancelDialog($event, item)"
-                hide-details
-              >
-              </v-checkbox>
-            </template>
+              <template v-slot:[`item.actions`]="{ item }">
+                <v-checkbox
+                  :model-value="item.status"
+                  :label="`${item.status ? 'OK' : 'NO'}`"
+                  :color="`${item.status ? 'green' : ''}`"
+                  :true-value="1"
+                  :false-value="0"
+                  @update:model-value="openCancelDialog($event, item)"
+                  hide-details
+                >
+                </v-checkbox>
+              </template>
 
-            <template v-slot:[`item.date`]="{ item }">
-              {{ twDateString(item.date) }}
-            </template>
-          </v-data-table>
-        </v-tabs-window-item>
-        <v-tabs-window-item value="two">
-          <p class="text-red-darken-1 font-weight-bold text-center">未放</p>
-          <v-data-table
-            :headers="headers"
-            :items="recordsList.filter((item) => !item.status)"
-            :items-per-page="-1"
-            item-value="record_id"
-            :row-props="getRowClass"
-            hide-default-footer
-            no-data-text="無"
-            class="border"
-          >
-            <template v-slot:[`item.location_name`]="{ item }">
-              <v-btn
-                variant="text"
-                :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
-              >
-                {{ item.location_name }}
-              </v-btn>
-            </template>
+              <template v-slot:[`item.date`]="{ item }">
+                {{ twDateString(item.date) }}
+              </template>
+            </v-data-table>
+          </v-tabs-window-item>
+          <v-tabs-window-item value="two">
+            <p class="text-red-darken-1 font-weight-bold text-center">未放</p>
+            <v-data-table
+              :headers="headers"
+              :items="recordsList.filter((item) => !item.status)"
+              :items-per-page="-1"
+              item-value="record_id"
+              :row-props="getRowClass"
+              hide-default-footer
+              no-data-text="無"
+              class="border"
+            >
+              <template v-slot:[`item.location_name`]="{ item }">
+                <v-btn
+                  variant="text"
+                  :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
+                >
+                  {{ item.location_name }}
+                </v-btn>
+              </template>
 
-            <template v-slot:[`item.actions`]="{ item }">
-              <v-checkbox
-                :model-value="item.status"
-                :label="`${item.status ? 'OK' : 'NO'}`"
-                :color="`${item.status ? 'green' : ''}`"
-                :true-value="1"
-                :false-value="0"
-                @update:model-value="openCancelDialog($event, item)"
-                hide-details
-              >
-              </v-checkbox>
-            </template>
+              <template v-slot:[`item.actions`]="{ item }">
+                <v-checkbox
+                  :model-value="item.status"
+                  :label="`${item.status ? 'OK' : 'NO'}`"
+                  :color="`${item.status ? 'green' : ''}`"
+                  :true-value="1"
+                  :false-value="0"
+                  @update:model-value="openCancelDialog($event, item)"
+                  hide-details
+                >
+                </v-checkbox>
+              </template>
 
-            <template v-slot:[`item.date`]="{ item }">
-              {{ twDateString(item.date) }}
-            </template>
-          </v-data-table>
+              <template v-slot:[`item.date`]="{ item }">
+                {{ twDateString(item.date) }}
+              </template>
+            </v-data-table>
 
-          <p class="text-green-darken-1 font-weight-bold text-center">已放</p>
-          <v-data-table
-            :headers="headers"
-            :items="recordsList.filter((item) => item.status)"
-            :items-per-page="-1"
-            item-value="record_id"
-            :row-props="getRowClass"
-            hide-default-footer
-            no-data-text="無"
-            class="border"
-          >
-            <template v-slot:[`item.location_name`]="{ item }">
-              <v-btn
-                variant="text"
-                :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
-              >
-                {{ item.location_name }}
-              </v-btn>
-            </template>
+            <p class="text-green-darken-1 font-weight-bold text-center">已放</p>
+            <v-data-table
+              :headers="headers"
+              :items="recordsList.filter((item) => item.status)"
+              :items-per-page="-1"
+              item-value="record_id"
+              :row-props="getRowClass"
+              hide-default-footer
+              no-data-text="無"
+              class="border"
+            >
+              <template v-slot:[`item.location_name`]="{ item }">
+                <v-btn
+                  variant="text"
+                  :to="`/periods/${periodId}/locations/${item.location_id}/distribute`"
+                >
+                  {{ item.location_name }}
+                </v-btn>
+              </template>
 
-            <template v-slot:[`item.actions`]="{ item }">
-              <v-checkbox
-                :model-value="item.status"
-                :label="`${item.status ? 'OK' : 'NO'}`"
-                :color="`${item.status ? 'green' : ''}`"
-                :true-value="1"
-                :false-value="0"
-                @update:model-value="openCancelDialog($event, item)"
-                hide-details
-              >
-              </v-checkbox>
-            </template>
+              <template v-slot:[`item.actions`]="{ item }">
+                <v-checkbox
+                  :model-value="item.status"
+                  :label="`${item.status ? 'OK' : 'NO'}`"
+                  :color="`${item.status ? 'green' : ''}`"
+                  :true-value="1"
+                  :false-value="0"
+                  @update:model-value="openCancelDialog($event, item)"
+                  hide-details
+                >
+                </v-checkbox>
+              </template>
 
-            <template v-slot:[`item.date`]="{ item }">
-              {{ twDateString(item.date) }}
-            </template>
-          </v-data-table>
-        </v-tabs-window-item>
-      </v-tabs-window>
-    </v-col>
+              <template v-slot:[`item.date`]="{ item }">
+                {{ twDateString(item.date) }}
+              </template>
+            </v-data-table>
+          </v-tabs-window-item>
+        </v-tabs-window>
+      </v-col>
 
-    <v-col cols="12" md="6">
-      <p class="text-grey-darken-1 font-weight-bold text-center">剩餘數量</p>
-      <v-data-table
-        :headers="headersPack"
-        :items="Object.entries(totalObj)"
-        :items-per-page="-1"
-        :row-props="getRowClass"
-        hide-default-footer
-        no-data-text="DONE"
-        class="border"
-      >
-        <template v-slot:no-data>
-          <div class="py-8 text-center text-green-darken-1">
-            <v-icon size="48" color="green-lighten-1" class="mb-2">
-              mdi-package-variant-closed-check
-            </v-icon>
-            <div class="text-h6 font-weight-bold">DONE</div>
-          </div>
-        </template>
-      </v-data-table>
-    </v-col>
-  </v-row>
+      <v-col cols="12" md="6">
+        <p class="text-grey-darken-1 font-weight-bold text-center">剩餘數量</p>
+        <v-data-table
+          :headers="headersPack"
+          :items="Object.entries(totalObj)"
+          :items-per-page="-1"
+          :row-props="getRowClass"
+          hide-default-footer
+          no-data-text="DONE"
+          class="border"
+        >
+          <template v-slot:no-data>
+            <div class="py-8 text-center text-green-darken-1">
+              <v-icon size="48" color="green-lighten-1" class="mb-2">
+                mdi-package-variant-closed-check
+              </v-icon>
+              <div class="text-h6 font-weight-bold">DONE</div>
+            </div>
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
 
-  <v-dialog v-model="dialogCancel" width="360" persistent>
-    <template v-slot:default>
-      <v-card title="取消">
-        <v-divider></v-divider>
+    <v-dialog v-model="dialogCancel" width="360" persistent>
+      <template v-slot:default>
+        <v-card title="取消">
+          <v-divider></v-divider>
 
-        <v-card-text class="px-4">
-          <p>確定要取消據點【{{ cancelItem.location_name }}】嗎？</p>
-        </v-card-text>
+          <v-card-text class="px-4">
+            <p>確定要取消據點【{{ cancelItem.location_name }}】嗎？</p>
+          </v-card-text>
 
-        <v-divider></v-divider>
+          <v-divider></v-divider>
 
-        <v-card-actions>
-          <v-btn @click="dialogCancel = false">取消</v-btn>
+          <v-card-actions>
+            <v-btn @click="dialogCancel = false">取消</v-btn>
 
-          <v-spacer></v-spacer>
+            <v-spacer></v-spacer>
 
-          <v-btn color="red-darken-1" variant="flat" @click="cancel()">確認</v-btn>
-        </v-card-actions>
-      </v-card>
-    </template>
-  </v-dialog>
+            <v-btn color="red-darken-1" variant="flat" @click="cancel()">確認</v-btn>
+          </v-card-actions>
+        </v-card>
+      </template>
+    </v-dialog>
+  </v-main>
 </template>
 
 <script setup lang="ts">
