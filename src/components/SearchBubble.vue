@@ -309,6 +309,7 @@ const record = ref<Records>({
   location_name: '',
   quantity: 0,
   status: 0,
+  date: null,
 })
 
 function openSearchLocationDialog() {
@@ -323,6 +324,7 @@ function openSearchLocationDialog() {
     location_name: '',
     quantity: 0,
     status: 0,
+    date: null,
   }
   dialogSearchLocation.value = true
 }
